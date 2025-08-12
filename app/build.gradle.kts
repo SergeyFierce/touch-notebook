@@ -51,8 +51,6 @@ android {
 }
 
 dependencies {
-    androidTestImplementation("androidx.room:room-testing:2.6.1")
-
     implementation(libs.androidx.paging.runtime)
     implementation(libs.inputmask)
     implementation(libs.kotlin.stdlib)
