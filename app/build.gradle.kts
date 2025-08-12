@@ -51,8 +51,6 @@ android {
 }
 
 dependencies {
-    androidTestImplementation("androidx.room:room-testing:2.6.1")
-
     implementation(libs.androidx.paging.runtime)
     implementation(libs.inputmask)
     implementation(libs.kotlin.stdlib)
@@ -86,6 +84,4 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     androidTestImplementation(libs.androidx.room.testing)
-    implementation("com.redmadrobot:input-mask-android:6.1.0")
-    implementation("com.googlecode.libphonenumber:libphonenumber:8.13.38")
 }
