@@ -352,7 +352,7 @@ class AddContactFragment : BaseFragment() {
     }
 }
 
-/** Маска телефона РФ: всегда "+7 " + (999) 999-99-99 */
+/** Маска телефона РФ: всегда "+7 " + (999) 999-99-99 *///////
 private class RuPhoneMaskWatcher(
     private val onValidate: (text: String, hasError: Boolean) -> Unit
 ) : TextWatcher {
