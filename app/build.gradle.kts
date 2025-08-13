@@ -84,4 +84,5 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     androidTestImplementation(libs.androidx.room.testing)
+    implementation("com.googlecode.libphonenumber:libphonenumber:8.13.38")
 }
