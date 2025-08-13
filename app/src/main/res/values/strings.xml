@@ -10,4 +10,6 @@
     <string name="menu_home">Главная</string>
     <string name="action_delete">Удалить</string>
     <string name="add_note">Добавить заметку</string>
+    <string name="contact_name_description">Имя контакта</string>
+    <string name="contact_status_description">Статус контакта</string>
 </resources>

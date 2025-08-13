@@ -7,6 +7,8 @@
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="8dp"
     android:layout_marginVertical="4dp"
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
     app:cardCornerRadius="12dp"
     app:cardElevation="2dp">
 
@@ -24,7 +26,8 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:ellipsize="end"
-            android:maxLines="1"/>
+            android:maxLines="1"
+            android:contentDescription="@string/contact_name_description"/>
 
         <!-- Статус (добавлен как тег) -->
         <TextView
@@ -36,7 +39,8 @@
             android:paddingHorizontal="8dp"
             android:paddingVertical="4dp"
             android:textColor="@color/white"
-            android:background="@drawable/status_background"/>
+            android:background="@drawable/status_background"
+            android:contentDescription="@string/contact_status_description"/>
 
         <!-- Контейнер для меток с отступами -->
         <com.google.android.material.chip.ChipGroup
