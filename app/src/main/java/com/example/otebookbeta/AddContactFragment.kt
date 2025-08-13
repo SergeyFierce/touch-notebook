@@ -24,9 +24,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import kotlin.math.min
-import com.redmadrobot.inputmask.MaskedTextChangedListener
-import com.google.i18n.phonenumbers.PhoneNumberUtil
+import com.example.otebookbeta.utils.setupPhoneInput
 
 @AndroidEntryPoint
 class AddContactFragment : BaseFragment() {
@@ -140,14 +138,12 @@ class AddContactFragment : BaseFragment() {
                 calendar.get(Calendar.DAY_OF_MONTH)
             ).show()
         }
-        // --- Телефон: сразу "+7 " и маска +7 (999) 999-99-99 ---
+        // --- Телефон: сразу "+7" и форматирование +7 (999) 999-99-99 ---
         if (binding.phoneInput.text.isNullOrBlank()) {
-            binding.phoneInput.setText("+7 ")
+            binding.phoneInput.setText("+7")
             binding.phoneInput.setSelection(binding.phoneInput.text?.length ?: 0)
         }
-        binding.phoneInput.addTextChangedListener(RuPhoneMaskWatcher { text, hasError ->
-            binding.phoneLayout.error = if (hasError) "Неверный формат российского телефона (+7 (XXX) XXX-XX-XX)" else null
-        })
+        setupPhoneInput(binding.phoneInput, binding.phoneLayout)
     }
 
     private fun setupFocusValidation() {
@@ -347,62 +343,5 @@ class AddContactFragment : BaseFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-}
-
-/** Маска телефона РФ: всегда "+7 " + (999) 999-99-99 *///////
-private class RuPhoneMaskWatcher(
-    private val onValidate: (text: String, hasError: Boolean) -> Unit
-) : TextWatcher {
-    private var isFormatting = false
-    private val maxLen = 18 // длина строки вида +7 (999) 999-99-99
-
-    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-
-    override fun afterTextChanged(s: Editable?) {
-        if (isFormatting) return
-        isFormatting = true
-
-        val rawDigits = (s?.toString() ?: "").replace("[^0-9]".toRegex(), "")
-        // гарантируем ведущую "7"
-        val withCountry = when {
-            rawDigits.isEmpty() -> "7"
-            rawDigits[0] == '8' -> "7" + rawDigits.substring(1)
-            rawDigits[0] != '7' -> "7$rawDigits"
-            else -> rawDigits
-        }
-        // 10 национальных цифр после "7"
-        val national = withCountry.drop(1).take(10)
-
-        val formatted = formatRu(national)
-        if (formatted != s.toString()) {
-            s?.replace(0, s.length, formatted)
-        }
-
-        val hasError = national.isNotEmpty() && national.length != 10
-        onValidate(formatted, hasError)
-
-        isFormatting = false
-    }
-
-    private fun formatRu(national: String): String {
-        if (national.isEmpty()) return "+7 "
-        val sb = StringBuilder("+7 ")
-        sb.append("(").append(national.substring(0, min(3, national.length)))
-        if (national.length >= 3) sb.append(")")
-        if (national.length > 3) {
-            sb.append(" ")
-            sb.append(national.substring(3, min(6, national.length)))
-        }
-        if (national.length > 6) {
-            sb.append("-")
-            sb.append(national.substring(6, min(8, national.length)))
-        }
-        if (national.length > 8) {
-            sb.append("-")
-            sb.append(national.substring(8, min(10, national.length)))
-        }
-        return if (sb.length > maxLen) sb.substring(0, maxLen) else sb.toString()
     }
 }
