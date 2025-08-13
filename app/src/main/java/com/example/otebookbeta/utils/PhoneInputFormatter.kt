@@ -29,10 +29,10 @@ fun setupPhoneInput(
             val input = s.toString().replace("[^0-9]".toRegex(), "")
             val digits = when {
                 input.isEmpty() -> ""
-                input.startsWith("8") -> "7${'$'}{input.substring(1)}"
-                input.startsWith("9") && input.length <= 10 -> "7${'$'}input"
+                input.startsWith("8") -> "7${input.substring(1)}"
+                input.startsWith("9") && input.length <= 10 -> "7$input"
                 input.startsWith("7") -> input
-                else -> "7${'$'}input"
+                else -> "7$input"
             }
 
             val formatted = buildFormattedPhone(digits)
@@ -59,18 +59,30 @@ fun setupPhoneInput(
 }
 
 private fun buildFormattedPhone(digits: String): String {
-    return when (digits.length) {
-        0 -> ""
-        1 -> "+7"
-        in 2..4 -> "+7 (${digits.substring(1)}"
-        in 5..7 -> "+7 (${digits.substring(1, minOf(4, digits.length))}) ${digits.substring(minOf(4, digits.length))}"
-        in 8..9 -> "+7 (${digits.substring(1, 4)}) ${digits.substring(4, minOf(7, digits.length))}-${digits.substring(minOf(7, digits.length))}"
-        else -> {
-            val code = digits.substring(1, minOf(4, digits.length))
-            val middle = digits.substring(minOf(4, digits.length), minOf(7, digits.length))
-            val last1 = digits.substring(minOf(7, digits.length), minOf(9, digits.length))
-            val last2 = digits.substring(minOf(9, digits.length), minOf(11, digits.length))
-            "+7 (${code}) ${middle}-${last1}${if (last2.isNotEmpty()) "-${last2}" else ""}"
-        }
+    if (digits.isEmpty()) return ""
+
+    val sb = StringBuilder("+7")
+
+    if (digits.length >= 2) {
+        sb.append(" (")
+        sb.append(digits.substring(1, minOf(4, digits.length)))
+        if (digits.length >= 4) sb.append(")")
     }
+
+    if (digits.length >= 5) {
+        sb.append(" ")
+        sb.append(digits.substring(4, minOf(7, digits.length)))
+    }
+
+    if (digits.length >= 8) {
+        sb.append("-")
+        sb.append(digits.substring(7, minOf(9, digits.length)))
+    }
+
+    if (digits.length >= 10) {
+        sb.append("-")
+        sb.append(digits.substring(9, minOf(11, digits.length)))
+    }
+
+    return sb.toString()
 }

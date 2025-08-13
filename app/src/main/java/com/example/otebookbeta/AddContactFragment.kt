@@ -138,9 +138,8 @@ class AddContactFragment : BaseFragment() {
                 calendar.get(Calendar.DAY_OF_MONTH)
             ).show()
         }
-        // --- Телефон: сразу "+7" и форматирование +7 (999) 999-99-99 ---
+        // Телефон: форматирование +7 (999) 999-99-99
         if (binding.phoneInput.text.isNullOrBlank()) {
-            binding.phoneInput.setText("+7")
             binding.phoneInput.setSelection(binding.phoneInput.text?.length ?: 0)
         }
         setupPhoneInput(binding.phoneInput, binding.phoneLayout)
@@ -218,8 +217,7 @@ class AddContactFragment : BaseFragment() {
     private fun validatePhone(): Boolean {
         val text = binding.phoneInput.text?.toString().orEmpty()
         val digits = text.replace("[^0-9]".toRegex(), "")
-        // Пустое поле — это только "+7 " (т.е. единственная цифра 7)
-        if (digits == "7" || digits.isEmpty()) {
+        if (digits.isEmpty()) {
             binding.phoneLayout.error = null
             return true
         }
