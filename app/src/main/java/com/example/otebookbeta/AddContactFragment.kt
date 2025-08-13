@@ -139,6 +139,9 @@ class AddContactFragment : BaseFragment() {
             ).show()
         }
         // Телефон: форматирование +7 (999) 999-99-99
+        if (binding.phoneInput.text.isNullOrBlank()) {
+            binding.phoneInput.setSelection(binding.phoneInput.text?.length ?: 0)
+        }
         setupPhoneInput(binding.phoneInput, binding.phoneLayout)
     }
 
