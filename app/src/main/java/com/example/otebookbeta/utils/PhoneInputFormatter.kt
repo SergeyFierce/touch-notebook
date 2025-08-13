@@ -69,6 +69,9 @@ private fun buildFormattedPhone(digits: String): String {
     sb.append(" (")
 
     if (digits.length > 1) {
+
+    if (digits.length >= 2) {
+        sb.append(" (")
         sb.append(digits.substring(1, minOf(4, digits.length)))
         if (digits.length >= 4) sb.append(")")
     }
@@ -84,6 +87,17 @@ private fun buildFormattedPhone(digits: String): String {
     }
 
     if (digits.length > 9) {
+    if (digits.length >= 5) {
+        sb.append(" ")
+        sb.append(digits.substring(4, minOf(7, digits.length)))
+    }
+
+    if (digits.length >= 8) {
+        sb.append("-")
+        sb.append(digits.substring(7, minOf(9, digits.length)))
+    }
+
+    if (digits.length >= 10) {
         sb.append("-")
         sb.append(digits.substring(9, minOf(11, digits.length)))
     }
