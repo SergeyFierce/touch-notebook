@@ -27,12 +27,16 @@ fun setupPhoneInput(
             isFormatting = true
 
             val input = s.toString().replace("[^0-9]".toRegex(), "")
-            val digits = when {
+            var digits = when {
                 input.isEmpty() -> ""
                 input.startsWith("8") -> "7${input.substring(1)}"
                 input.startsWith("9") && input.length <= 10 -> "7$input"
                 input.startsWith("7") -> input
                 else -> "7$input"
+            }
+
+            if (digits == "7" && (s?.length ?: 0) <= 3 && lastFormatted.isNotEmpty()) {
+                digits = ""
             }
 
             val formatted = buildFormattedPhone(digits)
@@ -62,6 +66,9 @@ private fun buildFormattedPhone(digits: String): String {
     if (digits.isEmpty()) return ""
 
     val sb = StringBuilder("+7")
+    sb.append(" (")
+
+    if (digits.length > 1) {
 
     if (digits.length >= 2) {
         sb.append(" (")
@@ -69,6 +76,17 @@ private fun buildFormattedPhone(digits: String): String {
         if (digits.length >= 4) sb.append(")")
     }
 
+    if (digits.length > 4) {
+        sb.append(" ")
+        sb.append(digits.substring(4, minOf(7, digits.length)))
+    }
+
+    if (digits.length > 7) {
+        sb.append("-")
+        sb.append(digits.substring(7, minOf(9, digits.length)))
+    }
+
+    if (digits.length > 9) {
     if (digits.length >= 5) {
         sb.append(" ")
         sb.append(digits.substring(4, minOf(7, digits.length)))
