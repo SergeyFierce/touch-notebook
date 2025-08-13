@@ -54,4 +54,12 @@ object ValidationUtils {
 
     fun dateError(text: String?): String? =
         if (text.isNullOrBlank()) "Поле Дата добавления обязательно" else null
+
+    fun ageError(text: String?): String? {
+        val t = text?.trim().orEmpty()
+        if (t.isEmpty()) return null
+        val age = t.toIntOrNull() ?: return "Возраст должен быть числом"
+        if (age < 0) return "Возраст не может быть отрицательным"
+        return null
+    }
 }

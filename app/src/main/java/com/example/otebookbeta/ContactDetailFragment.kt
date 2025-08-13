@@ -25,6 +25,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputLayout
 import com.example.otebookbeta.utils.setupPhoneInput
+import com.example.otebookbeta.utils.ValidationUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -129,7 +130,7 @@ class ContactDetailFragment : BaseFragment() {
             }
         }
         binding.actionSave.setOnClickListener {
-            if (validateForm()) {
+            if (checkInputs()) {
                 saveContact()
                 hasChanges = false
                 updateButtonsVisibility()
@@ -301,14 +302,42 @@ class ContactDetailFragment : BaseFragment() {
     // ===============================================================
 
     private fun setupFocusValidation() {
-        binding.fullNameInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validateName() }
-        binding.phoneInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validatePhone() }
-        binding.emailInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validateEmail() }
-        binding.professionInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validateProfession() }
-        binding.cityInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validateCity() }
-        binding.categoryInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validateCategory() }
-        binding.statusInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validateStatus() }
-        binding.dateInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validateDate() }
+        binding.fullNameInput.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) binding.fullNameLayout.error =
+                ValidationUtils.nameError(binding.fullNameInput.text?.toString())
+        }
+        binding.phoneInput.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) binding.phoneLayout.error =
+                ValidationUtils.phoneError(binding.phoneInput.text?.toString())
+        }
+        binding.emailInput.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) binding.emailLayout.error =
+                ValidationUtils.emailError(binding.emailInput.text?.toString())
+        }
+        binding.professionInput.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) binding.professionLayout.error =
+                ValidationUtils.professionError(binding.professionInput.text?.toString())
+        }
+        binding.cityInput.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) binding.cityLayout.error =
+                ValidationUtils.cityError(binding.cityInput.text?.toString())
+        }
+        binding.categoryInput.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) binding.categoryLayout.error =
+                ValidationUtils.categoryError(binding.categoryInput.text?.toString())
+        }
+        binding.statusInput.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) binding.statusLayout.error =
+                ValidationUtils.statusError(binding.statusInput.text?.toString())
+        }
+        binding.dateInput.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) binding.dateLayout.error =
+                ValidationUtils.dateError(binding.dateInput.text?.toString())
+        }
+        binding.ageInput.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) binding.ageLayout.error =
+                ValidationUtils.ageError(binding.ageInput.text?.toString())
+        }
     }
 
     private fun normalizePhone(s: String?): String = s?.replace("[^0-9]".toRegex(), "") ?: ""
@@ -342,74 +371,45 @@ class ContactDetailFragment : BaseFragment() {
         updateButtonsVisibility()
     }
 
-    private fun validateName(): Boolean {
-        val name = binding.fullNameInput.text?.toString()?.trim()
-        return when {
-            name.isNullOrBlank() -> { binding.fullNameLayout.error = "Поле ФИО обязательно"; false }
-            name.length < 2 || name.length > 100 -> { binding.fullNameLayout.error = "ФИО должно быть от 2 до 100 символов"; false }
-            !name.matches(Regex("^[А-Яа-яA-Za-z\\s\\-']+$")) -> { binding.fullNameLayout.error = "ФИО может содержать только буквы, пробелы, дефисы и апострофы"; false }
-            else -> { binding.fullNameLayout.error = null; true }
-        }
-    }
+    private fun checkInputs(): Boolean {
+        val nameError = ValidationUtils.nameError(binding.fullNameInput.text?.toString())
+        binding.fullNameLayout.error = nameError
 
-    private fun validatePhone(): Boolean {
-        val phone = binding.phoneInput.text?.toString()
-        if (phone.isNullOrBlank()) { binding.phoneLayout.error = null; return true }
-        val clean = normalizePhone(phone)
-        return if (clean.length == 11 && clean.startsWith("7")) { binding.phoneLayout.error = null; true }
-        else { binding.phoneLayout.error = "Неверный формат российского телефона (+7 (XXX) XXX-XX-XX)"; false }
-    }
+        val phoneError = ValidationUtils.phoneError(binding.phoneInput.text?.toString())
+        binding.phoneLayout.error = phoneError
 
-    private fun validateEmail(): Boolean {
-        val email = binding.emailInput.text?.toString()?.trim()
-        if (email.isNullOrBlank()) { binding.emailLayout.error = null; return true }
-        val ok = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-        binding.emailLayout.error = if (ok) null else "Неверный формат email"
-        return ok
-    }
+        val emailError = ValidationUtils.emailError(binding.emailInput.text?.toString())
+        binding.emailLayout.error = emailError
 
-    private fun validateProfession(): Boolean {
-        val profession = binding.professionInput.text?.toString()?.trim()
-        if (profession.isNullOrBlank()) { binding.professionLayout.error = null; return true }
-        return when {
-            profession.length !in 2..50 -> { binding.professionLayout.error = "Профессия должна быть от 2 до 50 символов"; false }
-            !profession.matches(Regex("^[А-Яа-яA-Za-z\\s\\-]+$")) -> { binding.professionLayout.error = "Профессия может содержать только буквы, пробелы и дефисы"; false }
-            else -> { binding.professionLayout.error = null; true }
-        }
-    }
+        val professionError = ValidationUtils.professionError(binding.professionInput.text?.toString())
+        binding.professionLayout.error = professionError
 
-    private fun validateCity(): Boolean {
-        val city = binding.cityInput.text?.toString()?.trim()
-        if (city.isNullOrBlank()) { binding.cityLayout.error = null; return true }
-        return when {
-            city.length !in 2..50 -> { binding.cityLayout.error = "Город должен быть от 2 до 50 символов"; false }
-            !city.matches(Regex("^[А-Яа-яA-Za-z\\s\\-]+$")) -> { binding.cityLayout.error = "Город может содержать только буквы, пробелы и дефисы"; false }
-            else -> { binding.cityLayout.error = null; true }
-        }
-    }
+        val cityError = ValidationUtils.cityError(binding.cityInput.text?.toString())
+        binding.cityLayout.error = cityError
 
-    private fun validateCategory(): Boolean {
-        val ok = !binding.categoryInput.text.isNullOrBlank()
-        binding.categoryLayout.error = if (ok) null else "Поле Категория обязательно"
-        return ok
-    }
+        val categoryError = ValidationUtils.categoryError(binding.categoryInput.text?.toString())
+        binding.categoryLayout.error = categoryError
 
-    private fun validateStatus(): Boolean {
-        val ok = !binding.statusInput.text.isNullOrBlank()
-        binding.statusLayout.error = if (ok) null else "Поле Статус обязательно"
-        return ok
-    }
+        val statusError = ValidationUtils.statusError(binding.statusInput.text?.toString())
+        binding.statusLayout.error = statusError
 
-    private fun validateDate(): Boolean {
-        val ok = !binding.dateInput.text.isNullOrBlank()
-        binding.dateLayout.error = if (ok) null else "Поле Дата добавления обязательно"
-        return ok
-    }
+        val dateError = ValidationUtils.dateError(binding.dateInput.text?.toString())
+        binding.dateLayout.error = dateError
 
-    private fun validateForm(): Boolean {
-        return validateName() and validatePhone() and validateEmail() and
-                validateProfession() and validateCity() and
-                validateCategory() and validateStatus() and validateDate()
+        val ageError = ValidationUtils.ageError(binding.ageInput.text?.toString())
+        binding.ageLayout.error = ageError
+
+        return listOf(
+            nameError,
+            phoneError,
+            emailError,
+            professionError,
+            cityError,
+            categoryError,
+            statusError,
+            dateError,
+            ageError
+        ).all { it == null }
     }
 
     private fun saveContact() {
