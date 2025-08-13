@@ -24,6 +24,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputLayout
+import com.example.otebookbeta.utils.setupPhoneInput
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -266,6 +267,8 @@ class ContactDetailFragment : BaseFragment() {
         // Имя
         binding.fullNameInput.addTextChangedListener(SimpleWatcher { checkForChanges() })
 
+        // Телефон: форматирование и отслеживание изменений
+        setupPhoneInput(binding.phoneInput, binding.phoneLayout) { checkForChanges() }
 
         // Остальные поля — просто трекаем изменения
         listOf(
