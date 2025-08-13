@@ -51,6 +51,7 @@ android {
 }
 
 dependencies {
+    implementation("com.redmadrobot:input-mask-android:6.1.0")
     implementation(libs.androidx.paging.runtime)
     implementation(libs.inputmask)
     implementation(libs.kotlin.stdlib)

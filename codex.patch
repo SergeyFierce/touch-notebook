@@ -1,0 +1,403 @@
+diff --git a/app/src/main/java/com/example/otebookbeta/AddContactFragment.kt b/app/src/main/java/com/example/otebookbeta/AddContactFragment.kt
+index e6a4b9a2fae0f08428be4b6cde30ff5cdd4304d6..0d2109756ebae9e77b861d93aedda7786a124362 100644
+--- a/app/src/main/java/com/example/otebookbeta/AddContactFragment.kt
++++ b/app/src/main/java/com/example/otebookbeta/AddContactFragment.kt
+@@ -2,53 +2,51 @@ package com.example.otebookbeta
+ 
+ import android.app.DatePickerDialog
+ import android.os.Bundle
+ import android.text.Editable
+ import android.text.TextWatcher
+ import android.util.Log
+ import android.util.Patterns
+ import android.view.LayoutInflater
+ import android.view.View
+ import android.view.ViewGroup
+ import android.widget.ArrayAdapter
+ import android.widget.AutoCompleteTextView
+ import android.widget.Toast
+ import androidx.core.content.ContextCompat
+ import androidx.fragment.app.viewModels
+ import androidx.navigation.fragment.findNavController
+ import com.example.otebookbeta.data.Contact
+ import com.example.otebookbeta.databinding.FragmentAddContactBinding
+ import com.google.android.material.snackbar.Snackbar
+ import com.google.android.material.textfield.TextInputLayout
+ import dagger.hilt.android.AndroidEntryPoint
+ import java.text.SimpleDateFormat
+ import java.util.Calendar
+ import java.util.Date
+ import java.util.Locale
+-import kotlin.math.min
+-import com.redmadrobot.inputmask.MaskedTextChangedListener
+-import com.google.i18n.phonenumbers.PhoneNumberUtil
++import com.example.otebookbeta.utils.applyRuPhoneMask
+ 
+ 
+ @AndroidEntryPoint
+ class AddContactFragment : BaseFragment() {
+ 
+     private var _binding: FragmentAddContactBinding? = null
+     private val binding get() = _binding!!
+     private val viewModel: AddContactViewModel by viewModels()
+     private val availableTags = listOf("Новичок", "Напомнить", "VIP")
+ 
+     override val shouldRequestFocusOnEndIconClick: Boolean = true
+ 
+     override fun onCreateView(
+         inflater: LayoutInflater, container: ViewGroup?,
+         savedInstanceState: Bundle?
+     ): View {
+         _binding = FragmentAddContactBinding.inflate(inflater, container, false)
+         return binding.root
+     }
+ 
+     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+         super.onViewCreated(view, savedInstanceState)
+         initForm()
+         setupFocusValidation()
+ 
+@@ -120,58 +118,52 @@ class AddContactFragment : BaseFragment() {
+ 
+         updateTags()
+         binding.newbieCheckbox.setOnCheckedChangeListener { _, _ -> updateTags() }
+         binding.remindCheckbox.setOnCheckedChangeListener { _, _ -> updateTags() }
+         binding.vipCheckbox.setOnCheckedChangeListener { _, _ -> updateTags() }
+ 
+         val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+         binding.dateInput.setText(dateFormat.format(Date()))
+         binding.dateInput.isEnabled = true
+ 
+         binding.dateInput.setOnClickListener {
+             val calendar = Calendar.getInstance()
+             DatePickerDialog(
+                 requireContext(),
+                 { _, year, month, day ->
+                     calendar.set(year, month, day)
+                     binding.dateInput.setText(dateFormat.format(calendar.time))
+                     binding.dateLayout.error = null
+                 },
+                 calendar.get(Calendar.YEAR),
+                 calendar.get(Calendar.MONTH),
+                 calendar.get(Calendar.DAY_OF_MONTH)
+             ).show()
+         }
+ 
+-        // --- Телефон: сразу "+7 " и маска +7 (999) 999-99-99 ---
+-        if (binding.phoneInput.text.isNullOrBlank()) {
+-            binding.phoneInput.setText("+7 ")
+-            binding.phoneInput.setSelection(binding.phoneInput.text?.length ?: 0)
+-        }
+-        binding.phoneInput.addTextChangedListener(RuPhoneMaskWatcher { text, hasError ->
+-            binding.phoneLayout.error = if (hasError) "Неверный формат российского телефона (+7 (XXX) XXX-XX-XX)" else null
+-        })
++        // --- Телефон ---
++        applyRuPhoneMask(binding.phoneInput, binding.phoneLayout)
+     }
+ 
+     private fun setupFocusValidation() {
+         binding.fullNameInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validateName() }
+         binding.phoneInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validatePhone() }
+         binding.emailInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validateEmail() }
+         binding.professionInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validateProfession() }
+         binding.cityInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validateCity() }
+         binding.categoryInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validateCategory() }
+         binding.statusInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validateStatus() }
+         binding.dateInput.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) validateDate() }
+     }
+ 
+     private fun updateStatusDropdown() {
+         val category = binding.categoryInput.text.toString()
+         val statusItems = when (category) {
+             "Партнёры", "Клиенты" -> arrayOf("Активный", "Пассивный", "Потерянный")
+             "Потенциальные" -> arrayOf("Холодный", "Тёплый", "Потерянный")
+             else -> arrayOf()
+         }
+         val statusAdapter = ArrayAdapter(
+             requireContext(), android.R.layout.simple_dropdown_item_1line, statusItems
+         )
+         binding.statusInput.setAdapter(statusAdapter)
+         binding.statusInput.setText("", false)
+@@ -331,80 +323,25 @@ class AddContactFragment : BaseFragment() {
+         Log.d("AddContactFragment", "Saving contact with category: ${contact.category}, tags: ${contact.tags}")
+         try {
+             viewModel.saveContact(contact)
+             Snackbar.make(binding.root, "Контакт добавлен!", Snackbar.LENGTH_SHORT)
+                 .setAnchorView(binding.addButton)
+                 .setBackgroundTint(ContextCompat.getColor(requireContext(), R.color.purple_500))
+                 .setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+                 .show()
+             if (isAdded) {
+                 findNavController().navigate(R.id.action_addContactFragment_to_nav_home)
+                 Log.d("AddContactFragment", "Navigated to nav_home after saving contact")
+             }
+         } catch (e: Exception) {
+             Log.e("AddContactFragment", "Error saving contact: ${e.message}", e)
+             Toast.makeText(requireContext(), "Ошибка при сохранении контакта: ${e.message}", Toast.LENGTH_LONG).show()
+         }
+     }
+ 
+     override fun onDestroyView() {
+         super.onDestroyView()
+         _binding = null
+     }
+ }
+ 
+ /** Маска телефона РФ: всегда "+7 " + (999) 999-99-99 *///////
+-private class RuPhoneMaskWatcher(
+-    private val onValidate: (text: String, hasError: Boolean) -> Unit
+-) : TextWatcher {
+-    private var isFormatting = false
+-    private val maxLen = 18 // длина строки вида +7 (999) 999-99-99
+-
+-    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+-    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+-
+-    override fun afterTextChanged(s: Editable?) {
+-        if (isFormatting) return
+-        isFormatting = true
+-
+-        val rawDigits = (s?.toString() ?: "").replace("[^0-9]".toRegex(), "")
+-        // гарантируем ведущую "7"
+-        val withCountry = when {
+-            rawDigits.isEmpty() -> "7"
+-            rawDigits[0] == '8' -> "7" + rawDigits.substring(1)
+-            rawDigits[0] != '7' -> "7$rawDigits"
+-            else -> rawDigits
+-        }
+-        // 10 национальных цифр после "7"
+-        val national = withCountry.drop(1).take(10)
+-
+-        val formatted = formatRu(national)
+-        if (formatted != s.toString()) {
+-            s?.replace(0, s.length, formatted)
+-        }
+-
+-        val hasError = national.isNotEmpty() && national.length != 10
+-        onValidate(formatted, hasError)
+-
+-        isFormatting = false
+-    }
+-
+-    private fun formatRu(national: String): String {
+-        if (national.isEmpty()) return "+7 "
+-        val sb = StringBuilder("+7 ")
+-        sb.append("(").append(national.substring(0, min(3, national.length)))
+-        if (national.length >= 3) sb.append(")")
+-        if (national.length > 3) {
+-            sb.append(" ")
+-            sb.append(national.substring(3, min(6, national.length)))
+-        }
+-        if (national.length > 6) {
+-            sb.append("-")
+-            sb.append(national.substring(6, min(8, national.length)))
+-        }
+-        if (national.length > 8) {
+-            sb.append("-")
+-            sb.append(national.substring(8, min(10, national.length)))
+-        }
+-        return if (sb.length > maxLen) sb.substring(0, maxLen) else sb.toString()
+-    }
+-}
+diff --git a/app/src/main/java/com/example/otebookbeta/ContactDetailFragment.kt b/app/src/main/java/com/example/otebookbeta/ContactDetailFragment.kt
+index fa5f6492e161642b143e73476d4efec4b88e6eef..d1491fbcb36b61913dc27a8d1986331fe75da800 100644
+--- a/app/src/main/java/com/example/otebookbeta/ContactDetailFragment.kt
++++ b/app/src/main/java/com/example/otebookbeta/ContactDetailFragment.kt
+@@ -1,47 +1,48 @@
+ package com.example.otebookbeta
+ 
+ import android.app.DatePickerDialog
+ import android.os.Bundle
+ import android.text.Editable
+ import android.text.TextWatcher
+ import android.util.Log
+ import android.view.LayoutInflater
+ import android.view.View
+ import android.view.ViewGroup
+ import android.widget.Toast
+ import androidx.core.content.ContextCompat
+ import androidx.fragment.app.viewModels
+ import androidx.lifecycle.Lifecycle
+ import androidx.lifecycle.lifecycleScope
+ import androidx.lifecycle.repeatOnLifecycle
+ import androidx.navigation.fragment.findNavController
+ import androidx.navigation.fragment.navArgs
+ import androidx.recyclerview.widget.LinearLayoutManager
+ import com.example.otebookbeta.data.Contact
+ import com.example.otebookbeta.databinding.FragmentContactDetailBinding
+ import com.example.otebookbeta.utils.ContactDictionary
++import com.example.otebookbeta.utils.applyRuPhoneMask
+ import com.google.android.material.dialog.MaterialAlertDialogBuilder
+ import com.google.android.material.snackbar.Snackbar
+ import com.google.android.material.textfield.MaterialAutoCompleteTextView
+ import com.google.android.material.textfield.TextInputLayout
+ import dagger.hilt.android.AndroidEntryPoint
+ import kotlinx.coroutines.launch
+ import java.text.SimpleDateFormat
+ import java.util.Calendar
+ import java.util.Locale
+ 
+ @AndroidEntryPoint
+ class ContactDetailFragment : BaseFragment() {
+ 
+     private var _binding: FragmentContactDetailBinding? = null
+     private val binding get() = _binding!!
+     private val args: ContactDetailFragmentArgs by navArgs()
+     private val contactViewModel: ContactDetailViewModel by viewModels()
+     private val noteViewModel: NoteListViewModel by viewModels()
+     private var hasChanges = false
+     private var originalContact: Contact? = null
+     private lateinit var noteAdapter: NoteAdapter
+ 
+     private val contact get() = contactViewModel.contact
+     override val shouldRequestFocusOnEndIconClick: Boolean = true
+ 
+@@ -244,102 +245,54 @@ class ContactDetailFragment : BaseFragment() {
+         (binding.socialMediaInput as MaterialAutoCompleteTextView)
+             .setText(contact.socialMedia?.takeIf { it.isNotBlank() } ?: "Не выбрано", false)
+         (binding.categoryInput as MaterialAutoCompleteTextView)
+             .setText(contact.category.orEmpty(), false)
+         (binding.statusInput as MaterialAutoCompleteTextView)
+             .setText(contact.status.orEmpty(), false)
+         binding.cityInput.setText(contact.city)
+         binding.ageInput.setText(contact.age?.toString() ?: "")
+         binding.professionInput.setText(contact.profession)
+         binding.commentInput.setText(contact.comment)
+         binding.dateInput.setText(contact.dateAdded)
+ 
+         updateStatusDropdown(resetSelection = false)
+         if (binding.categoryInput.text.isNotBlank()) {
+             binding.statusInput.isEnabled = true
+             binding.statusLayout.isEnabled = true
+             binding.statusLayout.hint = "Статус"
+         }
+     }
+ 
+     // ==== слушатели полей и форматирование телефона ====
+     private fun setupFieldListeners() {
+         // Имя
+         binding.fullNameInput.addTextChangedListener(SimpleWatcher { checkForChanges() })
+ 
+-        // Телефон — форматирование + валидация
+-        binding.phoneInput.addTextChangedListener(object : TextWatcher {
+-            private var isFormatting = false
+-            private var lastFormatted: String = ""
+-            private val maxLength = 18 // +7 (XXX) XXX-XX-XX
+-
+-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+-            override fun afterTextChanged(s: Editable?) {
+-                if (isFormatting) return
+-                isFormatting = true
+-
+-                val input = s.toString().replace("[^0-9]".toRegex(), "")
+-                val digits = when {
+-                    input.isEmpty() -> ""
+-                    input.startsWith("8") -> "7${input.substring(1)}"
+-                    input.startsWith("9") && input.length <= 10 -> "7$input"
+-                    input.startsWith("7") -> input
+-                    else -> "7$input"
+-                }
+-
+-                var formatted = when (digits.length) {
+-                    0 -> ""
+-                    1 -> "+7"
+-                    in 2..4 -> "+7 (${digits.substring(1)}"
+-                    in 5..7 -> "+7 (${digits.substring(1, minOf(4, digits.length))}) ${digits.substring(minOf(4, digits.length))}"
+-                    in 8..9 -> "+7 (${digits.substring(1, 4)}) ${digits.substring(4, minOf(7, digits.length))}-${digits.substring(minOf(7, digits.length))}"
+-                    else -> {
+-                        val code = digits.substring(1, minOf(4, digits.length))
+-                        val middle = digits.substring(minOf(4, digits.length), minOf(7, digits.length))
+-                        val last1 = digits.substring(minOf(7, digits.length), minOf(9, digits.length))
+-                        val last2 = digits.substring(minOf(9, digits.length), minOf(11, digits.length))
+-                        "+7 ($code) $middle-$last1${if (last2.isNotEmpty()) "-$last2" else ""}"
+-                    }
+-                }
+-                if (formatted.length > maxLength) formatted = formatted.substring(0, maxLength)
+-
+-                val cursor = binding.phoneInput.selectionStart.coerceIn(0, formatted.length)
+-                if (formatted != lastFormatted) {
+-                    lastFormatted = formatted
+-                    binding.phoneInput.setText(formatted)
+-                    binding.phoneInput.setSelection(cursor.coerceIn(0, formatted.length))
+-                }
+-
+-                val clean = digits
+-                val isValid = clean.isEmpty() || (clean.length == 11 && clean.startsWith("7"))
+-                binding.phoneLayout.error = if (!isValid && clean.isNotEmpty()) "Неверный формат номера" else null
+-
+-                isFormatting = false
+-                checkForChanges()
+-            }
+-        })
++        // Телефон
++        applyRuPhoneMask(binding.phoneInput, binding.phoneLayout) {
++            checkForChanges()
++        }
+ 
+         // Остальные поля — просто трекаем изменения
+         listOf(
+             binding.emailInput, binding.socialMediaInput, binding.categoryInput, binding.statusInput,
+             binding.cityInput, binding.ageInput, binding.professionInput, binding.commentInput, binding.dateInput
+         ).forEach { it.addTextChangedListener(SimpleWatcher { checkForChanges() }) }
+ 
+         // Теги
+         binding.newbieCheckbox.setOnCheckedChangeListener { _, _ -> checkForChanges() }
+         binding.remindCheckbox.setOnCheckedChangeListener { _, _ -> checkForChanges() }
+         binding.vipCheckbox.setOnCheckedChangeListener { _, _ -> checkForChanges() }
+ 
+         // Дата
+         binding.dateInput.setOnClickListener {
+             val calendar = Calendar.getInstance()
+             DatePickerDialog(
+                 requireContext(),
+                 { _, year, month, day ->
+                     calendar.set(year, month, day)
+                     val df = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+                     binding.dateInput.setText(df.format(calendar.time))
+                     checkForChanges()
+                 },
+                 calendar.get(Calendar.YEAR),
+                 calendar.get(Calendar.MONTH),
+diff --git a/app/src/main/java/com/example/otebookbeta/utils/PhoneMaskUtil.kt b/app/src/main/java/com/example/otebookbeta/utils/PhoneMaskUtil.kt
+new file mode 100644
+index 0000000000000000000000000000000000000000..54a27120a157b27d948945cd870e6efc6436e53c
+--- /dev/null
++++ b/app/src/main/java/com/example/otebookbeta/utils/PhoneMaskUtil.kt
+@@ -0,0 +1,36 @@
++package com.example.otebookbeta.utils
++
++import android.widget.EditText
++import com.google.android.material.textfield.TextInputLayout
++import com.redmadrobot.inputmask.MaskedTextChangedListener
++
++private const val RU_PHONE_MASK = "+7 ([000]) [000]-[00]-[00]"
++
++/**
++ * Применяет маску российского телефона к полю ввода.
++ * @param editText поле ввода
++ * @param layout TextInputLayout для отображения ошибки (опционально)
++ * @param onTextChanged колбэк на изменение текста
++ */
++fun applyRuPhoneMask(
++    editText: EditText,
++    layout: TextInputLayout? = null,
++    onTextChanged: (() -> Unit)? = null
++) {
++    MaskedTextChangedListener.installOn(
++        editText,
++        RU_PHONE_MASK,
++        object : MaskedTextChangedListener.ValueListener {
++            override fun onTextChanged(maskFilled: Boolean, extractedValue: String, formattedText: String) {
++                layout?.error = if (!maskFilled && extractedValue.isNotEmpty())
++                    "Неверный формат российского телефона (+7 (XXX) XXX-XX-XX)"
++                else null
++                onTextChanged?.invoke()
++            }
++        }
++    )
++    if (editText.text.isNullOrBlank()) {
++        editText.setText("+7 ")
++        editText.setSelection(editText.text?.length ?: 0)
++    }
++}

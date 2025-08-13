@@ -20,7 +20,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.otebookbeta.data.Contact
 import com.example.otebookbeta.databinding.FragmentContactDetailBinding
 import com.example.otebookbeta.utils.ContactDictionary
-import com.example.otebookbeta.utils.applyRuPhoneMask
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
@@ -267,10 +266,6 @@ class ContactDetailFragment : BaseFragment() {
         // Имя
         binding.fullNameInput.addTextChangedListener(SimpleWatcher { checkForChanges() })
 
-        // Телефон
-        applyRuPhoneMask(binding.phoneInput, binding.phoneLayout) {
-            checkForChanges()
-        }
 
         // Остальные поля — просто трекаем изменения
         listOf(

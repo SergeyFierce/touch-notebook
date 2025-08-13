@@ -22,8 +22,10 @@ libphonenumber = "8.13.3"
 countrycodepicker = "2.7.3"
 kotlin-stdlib = "2.0.21"
 paging = "3.3.2"
+inputmask = "7.2.4"
 
 [libraries]
+inputmask = { module = "com.redmadrobot:input-mask-android", version.ref = "inputmask" }
 androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
 androidx-paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin-stdlib" }
