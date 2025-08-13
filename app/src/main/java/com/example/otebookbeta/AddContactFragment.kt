@@ -24,7 +24,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import com.example.otebookbeta.utils.setupPhoneInput
+import com.example.otebookbeta.utils.applyRuPhoneMask
 
 
 @AndroidEntryPoint
@@ -141,7 +141,7 @@ class AddContactFragment : BaseFragment() {
         }
 
         // --- Телефон ---
-        setupPhoneInput(binding.phoneInput, binding.phoneLayout)
+        applyRuPhoneMask(binding.phoneInput, binding.phoneLayout)
     }
 
     private fun setupFocusValidation() {
